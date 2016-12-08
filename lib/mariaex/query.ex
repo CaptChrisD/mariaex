@@ -98,6 +98,11 @@ defimpl DBConnection.Query, for: Mariaex.Query do
 
   defp encode_param(nil, _binary_as),
     do: {1, :field_type_null, ""}
+  defp encode_param(bin, _binary_as) when is_map(bin) do
+    # REVIEW: If used with Ecto encode is not required
+    # bin = Poison.encode!(bin)
+    {0, :field_type_json, << to_length_encoded_integer(byte_size(bin)) :: binary, bin :: binary >>}
+  end
   defp encode_param(bin, binary_as) when is_binary(bin),
     do: {0, binary_as, << to_length_encoded_integer(byte_size(bin)) :: binary, bin :: binary >>}
   defp encode_param(int, _binary_as) when is_integer(int),
@@ -229,6 +234,7 @@ defimpl DBConnection.Query, for: Mariaex.Query do
   defp type_to_atom({:float, :field_type_float}, _),         do: :float32
   defp type_to_atom({:float, :field_type_double}, _),        do: :float64
   defp type_to_atom({:bit, :field_type_bit}, _),             do: :bit
+  defp type_to_atom({:json, :field_type_json}, _),           do: :json
   defp type_to_atom({:null, :field_type_null}, _),           do: nil
 end
 

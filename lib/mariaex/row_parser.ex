@@ -80,6 +80,10 @@ defmodule Mariaex.RowParser do
     decode_string(rest, fields, null_bitfield >>> 1, acc)
   end
 
+  defp decode_bin_rows(<<rest::bits>>, [:json | fields], null_bitfield, acc) do
+    decode_json(rest, fields, null_bitfield >>> 1, acc)
+  end
+
   defp decode_bin_rows(<<rest::bits>>, [:nil | fields], null_bitfield, acc) do
     decode_bin_rows(rest, fields, null_bitfield >>> 1, [nil | acc])
   end
@@ -203,5 +207,10 @@ defmodule Mariaex.RowParser do
   defp decode_datetime(<<11::8-little, year::16-little, month::8-little, day::8-little, hour::8-little, min::8-little, sec::8-little, msec::32-little, rest::bits >>,
                        fields, null_bitfield, acc) do
     decode_bin_rows(rest, fields, null_bitfield, [{{year, month, day}, {hour, min, sec, msec}} | acc])
+  end
+
+  defp decode_json(<<len::8, string::size(len)-binary, rest::bits>>, fields, null_bitfield, acc) do
+    #REVIEW: We have to decode here if in the query mariaex explicitly encodes
+    decode_bin_rows(rest, fields, null_bitfield, [string | acc])
   end
 end

@@ -589,4 +589,12 @@ defmodule QueryTest do
     assert :ok = query("REPLACE INTO test_replace VALUES (1, 'Old', '2014-08-20 18:47:00');", [])
     assert :ok = query("REPLACE INTO test_replace VALUES (1, 'New', ?);", [timestamp])
   end
+
+  # if System.get_env "MYSQL_JSON" do
+    test "support json for MySQL > 5.7.9", context do
+      assert :ok == query("CREATE TABLE json_test (jdoc JSON)", [])
+      assert :ok == query("INSERT INTO json_test VALUES(?)", [%{"test" => "test"}])
+      assert [[%{"test" => "test"}]] == query("SELECT * FROM json_test", [])
+    end
+  # end
 end
