@@ -98,11 +98,6 @@ defimpl DBConnection.Query, for: Mariaex.Query do
 
   defp encode_param(nil, _binary_as),
     do: {1, :field_type_null, ""}
-  defp encode_param(bin, _binary_as) when is_map(bin) do
-    # REVIEW: If used with Ecto encode is not required
-    # bin = Poison.encode!(bin)
-    {0, :field_type_json, << to_length_encoded_integer(byte_size(bin)) :: binary, bin :: binary >>}
-  end
   defp encode_param(bin, binary_as) when is_binary(bin),
     do: {0, binary_as, << to_length_encoded_integer(byte_size(bin)) :: binary, bin :: binary >>}
   defp encode_param(int, _binary_as) when is_integer(int),
@@ -116,6 +111,11 @@ defimpl DBConnection.Query, for: Mariaex.Query do
   defp encode_param(%Decimal{} = value, _binary_as) do
     bin = Decimal.to_string(value, :normal)
     {0, :field_type_newdecimal, << to_length_encoded_integer(byte_size(bin)) :: binary, bin :: binary >>}
+  end
+  defp encode_param(bin, _binary_as) when is_map(bin) do
+    # REVIEW: If used with Ecto encode is not required
+    # bin = Poison.encode!(bin) |> elem(1)
+    {0, :field_type_json, << to_length_encoded_integer(byte_size(bin)) :: binary, bin :: binary >>}
   end
   defp encode_param({year, month, day}, _binary_as),
     do: {0, :field_type_date, << 4::8-little, year::16-little, month::8-little, day::8-little>>}
